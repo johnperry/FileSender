@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+
+<project name="FileSender" basedir="." default="all">
+
+   <property name="version" value="20"/>
+
+   <property name="build" value="${basedir}/build"/>
+   <property name="products" value="${basedir}/products"/>
+   <property name="libraries" value="${basedir}/libraries"/>
+   <property name="documentation" value="${basedir}/documentation"/>
+
+   <property name="source" value="${basedir}/source"/>
+   <property name="java" value="${source}/java"/>
+   <property name="files" value="${source}/files"/>
+   <property name="installer" value="org/rsna/installer"/>
+   <property name="filesender" value="org/rsna/filesender"/>
+   <property name="misc" value="org/rsna/misc"/>
+
+	<property name="title" value="FileSender"/>
+	<property name="copyright" value="Copyright 2012 Radiological Society of North America"/>
+
+   <path id="classpath">
+      <pathelement location="${libraries}/dcm4che.jar"/>
+      <pathelement location="${libraries}/log4j.jar"/>
+      <pathelement location="${libraries}/getopt.jar"/>
+      <pathelement location="${libraries}/CTP.jar"/>
+      <pathelement location="${libraries}/util.jar"/>
+   </path>
+
+	<target name="init">
+		<tstamp>
+			<format property="today" pattern="yyyy.MM.dd"/>
+			<format property="now" pattern="HH:mm:ss z"/>
+		</tstamp>
+		<echo message="Time now ${now}"/>
+		<echo message="Building version ${version}"/>
+		<echo message="ant.java.version = ${ant.java.version}" />
+		<mkdir dir="${build}"/>
+		<mkdir dir="${products}"/>
+	</target>
+
+   <target name="clean">
+      <delete dir="${build}" failonerror="false"/>
+      <delete dir="${documentation}" failonerror="false"/>
+   </target>
+
+   <target name="filesender" depends="init">
+
+      <javac srcdir="${java}" destdir="${build}" optimize="on"
+             classpathref="classpath"
+             debug="true" debuglevel="lines,vars,source"/>
+
+      <copy todir="${build}">
+         <fileset dir="${files}" includes="content-types.properties"/>
+      </copy>
+
+      <jar destfile="${products}/FileSender.jar">
+         <manifest>
+            <attribute name="Main-Class" value="org.rsna.filesender.FileSender"/>
+            <attribute name="Class-Path" value="dcm4che.jar getopt.jar log4j.jar CTP.jar util.jar"/>
+         </manifest>
+         <fileset dir="${build}"
+            includes="${filesender}/*.* ${misc}/*.* content-types.properties" />
+      </jar>
+
+      <mkdir dir="${build}/FileSender"/>
+
+      <copy overwrite="true" todir="${build}/FileSender">
+         <fileset dir="${products}" includes="FileSender.jar"/>
+         <fileset dir="${libraries}" includes="dcm4che.jar"/>
+         <fileset dir="${libraries}" includes="dicom.jar"/>
+         <fileset dir="${libraries}" includes="log4j.jar"/>
+         <fileset dir="${libraries}" includes="getopt.jar"/>
+         <fileset dir="${libraries}" includes="CTP.jar"/>
+         <fileset dir="${libraries}" includes="util.jar"/>
+      </copy>
+
+      <jar destfile="${products}/FileSender-installer.jar">
+         <manifest>
+            <attribute name="Main-Class" value="org.rsna.filesender.Installer"/>
+            <attribute name="Implementation-Version" value="${today} @ ${now}"/>
+            <attribute name="Date" value="${today} at ${now}"/>
+            <attribute name="Description" value="File transmission utility"/>
+         </manifest>
+         <fileset dir="${build}"
+         	includes="${filesender}/Installer** ${installer}/** FileSender/*.*"/>
+      </jar>
+
+   </target>
+
+	<target name="javadocs">
+		<mkdir dir="${documentation}"/>
+		<javadoc destdir="${documentation}" sourcepath="${java}" classpathref="classpath"
+				 doctitle="${title}" windowtitle="${title}" bottom="${copyright}">
+			<package name="*"/>
+		</javadoc>
+	</target>
+
+   <target name="all" depends=
+      "clean, filesender, javadocs"/>
+
+</project>
