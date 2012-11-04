@@ -371,7 +371,7 @@ public class Sender extends Thread {
 	private boolean sendFileUsingDicom(File file) {
 		String message = "<b>" + (++fileNumber) + "</b>: Send " +
 							file.getAbsolutePath() + " to " + urlString + "<br>";
-		DicomStorageSCU dicomSender = new DicomStorageSCU(urlString,false,0,0);
+		DicomStorageSCU dicomSender = new DicomStorageSCU(urlString,true,0,0);
 		Status status = dicomSender.send(file);
 		if (status.equals(Status.FAIL)) {
 			sendMessage(message +

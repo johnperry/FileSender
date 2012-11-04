@@ -24,7 +24,7 @@ import org.rsna.misc.SourcePanel;
  */
 public class FileSender extends JFrame {
 
-	String windowTitle = "MIRC FileSender - version 20";
+	String windowTitle = "MIRC FileSender - version 21";
 	ApplicationProperties properties;
 	GeneralAuthenticator authenticator;
 

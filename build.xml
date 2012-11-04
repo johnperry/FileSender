@@ -48,6 +48,7 @@
 
       <javac srcdir="${java}" destdir="${build}" optimize="on"
              classpathref="classpath"
+			 includeantruntime="false"
              debug="true" debuglevel="lines,vars,source"/>
 
       <copy todir="${build}">
