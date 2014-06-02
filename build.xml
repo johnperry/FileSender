@@ -16,6 +16,8 @@
    <property name="filesender" value="org/rsna/filesender"/>
    <property name="misc" value="org/rsna/misc"/>
 
+   <property name="ctp" value="\Development\CTP"/>
+
 	<property name="title" value="FileSender"/>
 	<property name="copyright" value="Copyright 2012 Radiological Society of North America"/>
 
@@ -44,7 +46,19 @@
       <delete dir="${documentation}" failonerror="false"/>
    </target>
 
-   <target name="filesender" depends="init">
+	<target name="getLibraryJars">
+		<copy overwrite="true" todir="${libraries}">
+			<fileset dir="${ctp}/libraries">
+				<include name="CTP.jar"/>
+				<include name="dcm4che.jar"/>
+				<include name="dcm4che-imageio-rle-2.0.25.jar"/>
+				<include name="log4j.jar"/>
+				<include name="util.jar"/>
+			</fileset>
+		</copy>
+	</target>
+
+   <target name="filesender" depends="init, getLibraryJars">
 
       <javac srcdir="${java}" destdir="${build}" optimize="on"
              classpathref="classpath"

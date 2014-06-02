@@ -11,8 +11,8 @@ import java.awt.*;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
-import org.rsna.misc.ApplicationProperties;
-import org.rsna.misc.PairedLayout;
+import org.rsna.ui.ApplicationProperties;
+import org.rsna.ui.PairedLayout;
 
 /**
  * The JPanel providing a user interface for entering and

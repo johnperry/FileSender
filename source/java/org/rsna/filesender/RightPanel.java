@@ -12,10 +12,10 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
-import org.rsna.misc.ApplicationProperties;
-import org.rsna.misc.FileEvent;
-import org.rsna.misc.FileListener;
-import org.rsna.misc.SourcePanel;
+import org.rsna.ui.ApplicationProperties;
+import org.rsna.ui.FileEvent;
+import org.rsna.ui.FileListener;
+import org.rsna.ui.SourcePanel;
 
 /**
  * A JPanel that provides a user interface for the active part of

@@ -25,9 +25,9 @@ import javax.swing.event.*;
 import org.apache.log4j.Logger;
 import org.rsna.ctp.pipeline.Status;
 import org.rsna.ctp.stdstages.dicom.DicomStorageSCU;
+import org.rsna.ui.GeneralFileFilter;
+import org.rsna.ui.SourcePanel;
 import org.rsna.util.FileUtil;
-import org.rsna.misc.GeneralFileFilter;
-import org.rsna.misc.SourcePanel;
 import org.rsna.util.AcceptAllHostnameVerifier;
 import org.rsna.util.AcceptAllX509TrustManager;
 
@@ -371,7 +371,15 @@ public class Sender extends Thread {
 	private boolean sendFileUsingDicom(File file) {
 		String message = "<b>" + (++fileNumber) + "</b>: Send " +
 							file.getAbsolutePath() + " to " + urlString + "<br>";
-		DicomStorageSCU dicomSender = new DicomStorageSCU(urlString,true,0,0);
+		DicomStorageSCU dicomSender = new DicomStorageSCU(
+												urlString,
+												10000, //association timeout in ms
+												true, //use new association for each file
+												0, //host tag
+												0, //port tag
+												0, //called AET tag
+												0  //calling AET tag
+											);
 		Status status = dicomSender.send(file);
 		if (status.equals(Status.FAIL)) {
 			sendMessage(message +

@@ -9,12 +9,13 @@ package org.rsna.filesender;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.net.*;
 import javax.swing.*;
 import org.apache.log4j.*;
-import org.rsna.misc.ApplicationProperties;
-import org.rsna.misc.GeneralAuthenticator;
-import org.rsna.misc.SourcePanel;
+import org.rsna.ui.ApplicationProperties;
+import org.rsna.ui.GeneralAuthenticator;
+import org.rsna.ui.SourcePanel;
 
 /**
  * The FileSender program sends files using the HTTP, HTTPS,
@@ -24,7 +25,7 @@ import org.rsna.misc.SourcePanel;
  */
 public class FileSender extends JFrame {
 
-	String windowTitle = "MIRC FileSender - version 21";
+	String windowTitle = "MIRC FileSender - version 22";
 	ApplicationProperties properties;
 	GeneralAuthenticator authenticator;
 
@@ -40,7 +41,7 @@ public class FileSender extends JFrame {
 	 * Class constructor; creates a new instance of the FileSender class.
 	 */
 	public FileSender() {
-		properties = new ApplicationProperties("FileSender.properties");
+		properties = new ApplicationProperties(new File("FileSender.properties"));
 		authenticator = new GeneralAuthenticator(this);
 		Authenticator.setDefault(authenticator);
 
