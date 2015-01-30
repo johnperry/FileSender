@@ -76,7 +76,7 @@ public class RightPanel extends JPanel
 	 * @param event the event containing the File currently selected.
 	 */
 	public void fileEventOccurred(FileEvent event) {
-		if (event.type == FileEvent.SELECT) currentSelection = event.after;
+		if (event.type == FileEvent.SELECT) currentSelection = event.file;
 	}
 
 	/**

@@ -116,6 +116,7 @@ public class Sender extends Thread {
 					"Unable to load the content-types.properties resource:\n" + e.getMessage());
 			}
 		}
+		System.setProperty("http.keepAlive", "false");
 	}
 
 	/**
