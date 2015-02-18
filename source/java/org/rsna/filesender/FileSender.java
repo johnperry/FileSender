@@ -41,7 +41,6 @@ public class FileSender extends JFrame {
 	 * Class constructor; creates a new instance of the FileSender class.
 	 */
 	public FileSender() {
-		System.setProperty("http.keepAlive", "false");
 		properties = new ApplicationProperties(new File("FileSender.properties"));
 		authenticator = new GeneralAuthenticator(this);
 		Authenticator.setDefault(authenticator);

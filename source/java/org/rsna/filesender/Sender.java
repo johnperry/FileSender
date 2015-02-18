@@ -15,11 +15,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.zip.*;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.swing.*;
 import javax.swing.event.*;
 import org.apache.log4j.Logger;
@@ -29,8 +25,6 @@ import org.rsna.ui.GeneralFileFilter;
 import org.rsna.ui.SourcePanel;
 import org.rsna.util.FileUtil;
 import org.rsna.util.HttpUtil;
-import org.rsna.util.AcceptAllHostnameVerifier;
-import org.rsna.util.AcceptAllX509TrustManager;
 
 /**
  * A Thread for sending one or more files using HTTP, HTTPS, or DICOM.
@@ -60,8 +54,6 @@ public class Sender extends Thread {
 
 	/**
 	 * Class constructor; creating an instance of the Sender.
-	 * Note: The constructor sets the System http.keepAlive property
-	 * to false in case it wasn't done somewhere else.
 	 * @param parent the parent of this Thread.
 	 * @param filter the file filter for selecting files to send.
 	 * @param file the file to send, or if it is a directory, the
@@ -96,15 +88,6 @@ public class Sender extends Thread {
 		http = (urlLC.indexOf("http://") != -1);
 		https = (urlLC.indexOf("https://") != -1);
 		dicom = (urlLC.indexOf("dicom://") != -1);
-		if (https) {
-			trustAllCerts = new TrustManager[] { new AcceptAllX509TrustManager() };
-			try {
-				SSLContext sc = SSLContext.getInstance("SSL");
-				sc.init(null,trustAllCerts, new SecureRandom());
-				HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-			}
-			catch (Exception e) { }
-		}
 		if (dicom) decodeUrlString();
 		listenerList = new EventListenerList();
 		if (!forceMircContentType) {
@@ -120,7 +103,6 @@ public class Sender extends Thread {
 					"Unable to load the content-types.properties resource:\n" + e.getMessage());
 			}
 		}
-		System.setProperty("http.keepAlive", "false");
 	}
 
 	/**
@@ -238,7 +220,7 @@ public class Sender extends Thread {
 	//NOTE: This code accepts all certificates when sending via HTTPS.
 	private boolean sendFileUsingHttp(File file) {
 		URL url;
-		URLConnection conn;
+		HttpURLConnection conn;
 		OutputStream svros;
 		FileInputStream fis;
 		BufferedReader svrrdr;
@@ -290,7 +272,7 @@ public class Sender extends Thread {
 			byte[] bbuf = new byte[1024];
 			while ((n=fis.read(bbuf,0,bbuf.length)) > 0) svros.write(bbuf,0,n);
 			svros.flush();
-			svros.close();
+			//svros.close();
 			fis.close();
 		}
 		catch (IOException e) {
@@ -314,7 +296,8 @@ public class Sender extends Thread {
 			int n;
 			char[] cbuf = new char[1024];
 			while ((n = svrrdr.read(cbuf,0,cbuf.length)) != -1) svrsw.write(cbuf,0,n);
-			svrrdr.close();
+			//svrrdr.close(); //Leave open so disconnect actually closes the connection
+			conn.disconnect();
 			String response = svrsw.toString();
 
 			//Try to make a nice response without knowing anything about the
