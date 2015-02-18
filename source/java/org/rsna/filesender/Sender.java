@@ -28,6 +28,7 @@ import org.rsna.ctp.stdstages.dicom.DicomStorageSCU;
 import org.rsna.ui.GeneralFileFilter;
 import org.rsna.ui.SourcePanel;
 import org.rsna.util.FileUtil;
+import org.rsna.util.HttpUtil;
 import org.rsna.util.AcceptAllHostnameVerifier;
 import org.rsna.util.AcceptAllX509TrustManager;
 
@@ -55,9 +56,12 @@ public class Sender extends Thread {
 	boolean https;
 	boolean dicom;
 	int fileNumber = 0;
+	int timeout = 5000;
 
 	/**
 	 * Class constructor; creating an instance of the Sender.
+	 * Note: The constructor sets the System http.keepAlive property
+	 * to false in case it wasn't done somewhere else.
 	 * @param parent the parent of this Thread.
 	 * @param filter the file filter for selecting files to send.
 	 * @param file the file to send, or if it is a directory, the
@@ -242,15 +246,9 @@ public class Sender extends Thread {
 						file.getAbsolutePath() + " to " + urlString + "<br>";
 		try {
 			url = new URL(urlString);
-			if (url.getProtocol().toLowerCase().startsWith("https")) {
-				HttpsURLConnection httpsConn = (HttpsURLConnection)url.openConnection();
-				httpsConn.setHostnameVerifier(new AcceptAllHostnameVerifier());
-				httpsConn.setUseCaches(false);
-				httpsConn.setDefaultUseCaches(false);
-				conn = httpsConn;
-			}
-			else conn = url.openConnection();
-			conn.setDoOutput(true);
+			conn = HttpUtil.getConnection(url);
+			conn.setReadTimeout(timeout);
+			conn.setConnectTimeout(timeout);
 
 			//Set the content type
 			String contentType = null;
@@ -258,7 +256,7 @@ public class Sender extends Thread {
 			else if (contentTypes != null) {
 				String ext = file.getName();
 				ext = ext.substring(ext.lastIndexOf(".")+1).toLowerCase();
-				contentType = (String)contentTypes.getProperty(ext);
+				contentType = contentTypes.getProperty(ext);
 			}
 			if (contentType == null) contentType = "application/default";
 			conn.setRequestProperty("Content-Type",contentType);
@@ -274,6 +272,7 @@ public class Sender extends Thread {
 			sendMessage(message +
 					"<font color=\"red\">Unable to establish a URLConnection to "
 					+ urlString + "</font><br>");
+			e.printStackTrace();
 			return false;
 		}
 		try {
@@ -350,7 +349,7 @@ public class Sender extends Thread {
 					return false;
 				}
 			}
-			//If it was a forced DICOM content type send, then look for "error"
+			//If it was a forced MIRC content type send, then look for "error"
 			else if (responseLC.indexOf("error") != -1) {
 				sendMessage(message + "<font color=\"red\">" + response + "</font><br><br>");
 				return false;
