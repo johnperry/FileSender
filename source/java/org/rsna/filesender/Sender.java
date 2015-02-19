@@ -260,7 +260,7 @@ public class Sender extends Thread {
 		try {
 			fis = new FileInputStream(file);
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			sendMessage(message +
 					"<font color=\"red\">Unable to obtain an input stream to read the file:</font></br>"
 					+ e.getMessage() + "<br>");
@@ -275,30 +275,19 @@ public class Sender extends Thread {
 			//svros.close();
 			fis.close();
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			sendMessage(message +
 					"<font color=\"red\">Error sending the file:</font><br>"
 					+ e.getMessage() + "<br>");
 			return false;
 		}
 		try {
-			//Get the response
-			svrrdr = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		}
-		catch (IOException e) {
-			sendMessage(message +
-					"<font color=\"red\">Unable to obtain an input stream to read the response:</font><br>"
-					+ e.getMessage() + "<br>");
-			return false;
-		}
-		try {
-			StringWriter svrsw = new StringWriter();
-			int n;
-			char[] cbuf = new char[1024];
-			while ((n = svrrdr.read(cbuf,0,cbuf.length)) != -1) svrsw.write(cbuf,0,n);
-			//svrrdr.close(); //Leave open so disconnect actually closes the connection
+			int responseCode = conn.getResponseCode();
+			String code = "<b>ResponseCode = "+responseCode+"</b><br>";
+			if (responseCode != 200) code = "<font color=\"red\">"+code+"</font>";
+			message += code;
+			String response = FileUtil.getTextOrException( conn.getInputStream(), FileUtil.utf8, false );
 			conn.disconnect();
-			String response = svrsw.toString();
 
 			//Try to make a nice response without knowing anything about the
 			//receiving application.
@@ -342,7 +331,7 @@ public class Sender extends Thread {
 				return true;
 			}
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			sendMessage(message +
 					"<font color=\"red\">Error reading the response:</font><br>"
 					+ e.getMessage() + "<br><br>");
