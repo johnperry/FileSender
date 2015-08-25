@@ -51,6 +51,8 @@ public class Sender extends Thread {
 	boolean dicom;
 	int fileNumber = 0;
 	int timeout = 5000;
+	
+	static final long maxUnchunked = 20 * 1024 * 1024;
 
 	/**
 	 * Class constructor; creating an instance of the Sender.
@@ -221,9 +223,10 @@ public class Sender extends Thread {
 	private boolean sendFileUsingHttp(File file) {
 		URL url;
 		HttpURLConnection conn;
-		OutputStream svros;
-		FileInputStream fis;
+		BufferedOutputStream svros;
+		BufferedInputStream fis;
 		BufferedReader svrrdr;
+		long fileLength = file.length();
 		String message = "<b>" + (++fileNumber) + "</b>: Send " +
 						file.getAbsolutePath() + " to " + urlString + "<br>";
 		try {
@@ -242,13 +245,15 @@ public class Sender extends Thread {
 			}
 			if (contentType == null) contentType = "application/default";
 			conn.setRequestProperty("Content-Type",contentType);
+			if (fileLength > maxUnchunked) conn.setChunkedStreamingMode(0);
 
 			//Set the content disposition
 			conn.setRequestProperty("Content-Disposition","attachment; filename=\"" + file.getName() + "\"");
+			conn.setRequestProperty("Content-Length", Long.toString(file.length()));
 
 			//Make the connection
 			conn.connect();
-			svros = conn.getOutputStream();
+			svros = new BufferedOutputStream( conn.getOutputStream() );
 		}
 		catch (Exception e) {
 			sendMessage(message +
@@ -258,7 +263,7 @@ public class Sender extends Thread {
 			return false;
 		}
 		try {
-			fis = new FileInputStream(file);
+			fis = new BufferedInputStream( new FileInputStream(file) );
 		}
 		catch (Exception e) {
 			sendMessage(message +
@@ -266,13 +271,15 @@ public class Sender extends Thread {
 					+ e.getMessage() + "<br>");
 			return false;
 		}
+		//Send the file to the server
 		try {
-			//Send the file to the server
 			int n;
 			byte[] bbuf = new byte[1024];
-			while ((n=fis.read(bbuf,0,bbuf.length)) > 0) svros.write(bbuf,0,n);
+			while ((n=fis.read(bbuf,0,bbuf.length)) > 0) {
+				svros.write(bbuf,0,n);
+			}
 			svros.flush();
-			//svros.close();
+			//svros.close(); //do not close or response will not be received
 			fis.close();
 		}
 		catch (Exception e) {
