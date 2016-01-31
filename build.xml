@@ -14,9 +14,8 @@
    <property name="files" value="${source}/files"/>
    <property name="installer" value="org/rsna/installer"/>
    <property name="filesender" value="org/rsna/filesender"/>
-   <property name="misc" value="org/rsna/misc"/>
 
-   <property name="ctp" value="\Development\CTP"/>
+   <property name="ctp" value="/Development/CTP"/>
 
 	<property name="title" value="FileSender"/>
 	<property name="copyright" value="Copyright 2012 Radiological Society of North America"/>
@@ -75,7 +74,8 @@
             <attribute name="Class-Path" value="dcm4che.jar getopt.jar log4j.jar CTP.jar util.jar"/>
          </manifest>
          <fileset dir="${build}"
-            includes="${filesender}/*.* ${misc}/*.* content-types.properties" />
+            includes="${filesender}/** content-types.properties" 
+            excludes="${filesender}/Installer**"/>
       </jar>
 
       <mkdir dir="${build}/FileSender"/>
@@ -88,6 +88,7 @@
          <fileset dir="${libraries}" includes="getopt.jar"/>
          <fileset dir="${libraries}" includes="CTP.jar"/>
          <fileset dir="${libraries}" includes="util.jar"/>
+         <fileset dir="${files}" includes="log4j.properties"/>
       </copy>
 
       <jar destfile="${products}/FileSender-installer.jar">
@@ -98,7 +99,7 @@
             <attribute name="Description" value="File transmission utility"/>
          </manifest>
          <fileset dir="${build}"
-         	includes="${filesender}/Installer** ${installer}/** FileSender/*.*"/>
+         	includes="${filesender}/Installer** ${installer}/** FileSender/**"/>
       </jar>
 
    </target>
