@@ -89,9 +89,11 @@ public class RightPanel extends JPanel
 	public void fileSent(SenderEvent event) {
 		if (event.done) {
 			senderScrollPane.displayAll();
-			int count = sender.getFileCount();
-			String text = "<br><br>" + count + " file" + ((count!=1)?"s":"") + " sent";
-			senderScrollPane.append(text);
+			int fileCount = sender.getFileCount();
+			int skipCount = sender.getSkipCount();
+			String fileCountText = "<br><br>" + fileCount + " file" + ((fileCount!=1)?"s":"") + " sent";
+			String skipCountText = "<br>" + skipCount + " file" + ((skipCount!=1)?"s":"") + " skipped<br>";
+			senderScrollPane.append(fileCountText + skipCountText);
 			footerPanel.button.setText("Okay");
 		}
 		else senderScrollPane.appendErrorString(event.message);
@@ -118,6 +120,7 @@ public class RightPanel extends JPanel
 							currentSelection,
 							subdirectories,
 							footerPanel.unpackZip.isSelected(),
+							footerPanel.skipDuplicates.isSelected(),
 							footerPanel.forceMIRC.isSelected(),
 							destination);
 						sender.addSenderListener(this);
@@ -168,20 +171,13 @@ public class RightPanel extends JPanel
 	//the checkbox for forcing the content type.
 	class FooterPanel extends JPanel implements ActionListener {
 		public JButton button;
-		public JCheckBox forceMIRC;
 		public JCheckBox unpackZip;
+		public JCheckBox skipDuplicates;
+		public JCheckBox forceMIRC;
 		public FooterPanel() {
 			super();
 			this.setBackground(background);
 			this.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
-
-			String mirc = (String)properties.getProperty("force-mirc");
-			if (mirc == null) {
-				mirc = "yes";
-				properties.setProperty("force-mirc",mirc);
-			}
-			forceMIRC = new JCheckBox("Force MIRC Content-Type for HTTP(S)",mirc.equals("yes"));
-			forceMIRC.setBackground(background);
 
 			String unpack = (String)properties.getProperty("unpack-zip-files");
 			if (unpack == null) {
@@ -190,6 +186,22 @@ public class RightPanel extends JPanel
 			}
 			unpackZip = new JCheckBox("Unpack zip files",unpack.equals("yes"));
 			unpackZip.setBackground(background);
+
+			String skip = (String)properties.getProperty("skip-duplicates");
+			if (skip == null) {
+				skip = "no";
+				properties.setProperty("skip-duplicates",skip);
+			}
+			skipDuplicates = new JCheckBox("Skip duplicate SOPInstanceUIDs for DICOM",skip.equals("yes"));
+			skipDuplicates.setBackground(background);
+
+			String mirc = (String)properties.getProperty("force-mirc");
+			if (mirc == null) {
+				mirc = "yes";
+				properties.setProperty("force-mirc",mirc);
+			}
+			forceMIRC = new JCheckBox("Force MIRC Content-Type for HTTP(S)",mirc.equals("yes"));
+			forceMIRC.setBackground(background);
 
 			button = new JButton("Send");
 
@@ -200,15 +212,22 @@ public class RightPanel extends JPanel
 			this.add(box1);
 
 			Box box2 = new Box(BoxLayout.X_AXIS);
-			box2.add(forceMIRC);
-			forceMIRC.addActionListener(this);
+			box2.add(skipDuplicates);
+			skipDuplicates.addActionListener(this);
 			box2.add(Box.createHorizontalGlue());
-			box2.add(button);
 			this.add(box2);
+
+			Box box3 = new Box(BoxLayout.X_AXIS);
+			box3.add(forceMIRC);
+			forceMIRC.addActionListener(this);
+			box3.add(Box.createHorizontalGlue());
+			box3.add(button);
+			this.add(box3);
 		}
 		public void actionPerformed(ActionEvent evt) {
-			properties.setProperty("force-mirc",(forceMIRC.isSelected() ? "yes" : "no"));
 			properties.setProperty("unpack-zip-files",(unpackZip.isSelected() ? "yes" : "no"));
+			properties.setProperty("skip-duplicates",(skipDuplicates.isSelected() ? "yes" : "no"));
+			properties.setProperty("force-mirc",(forceMIRC.isSelected() ? "yes" : "no"));
 		}
 	}
 

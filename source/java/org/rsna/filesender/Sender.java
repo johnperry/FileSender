@@ -19,6 +19,7 @@ import javax.net.ssl.TrustManager;
 import javax.swing.*;
 import javax.swing.event.*;
 import org.apache.log4j.Logger;
+import org.rsna.ctp.objects.DicomObject;
 import org.rsna.ctp.pipeline.Status;
 import org.rsna.ctp.stdstages.dicom.DicomStorageSCU;
 import org.rsna.ui.GeneralFileFilter;
@@ -39,6 +40,7 @@ public class Sender extends Thread {
 	File file;
 	boolean subdirectories;
 	boolean unpackZip;
+	boolean skipDuplicates;
 	boolean forceMircContentType;
 	Properties contentTypes;
 	String urlString;
@@ -49,8 +51,10 @@ public class Sender extends Thread {
 	boolean http;
 	boolean https;
 	boolean dicom;
-	int fileNumber = 0;
+	int fileCount = 0;
+	int skipCount = 0;
 	int timeout = 5000;
+	HashSet<String> sopiUIDs;
 	
 	static final long maxUnchunked = 20 * 1024 * 1024;
 
@@ -76,6 +80,7 @@ public class Sender extends Thread {
 				  File file,
 				  boolean subdirectories,
 				  boolean unpackZip,
+				  boolean skipDuplicates,
 				  boolean forceMircContentType,
 				  String urlString) throws Exception {
 		super();
@@ -84,6 +89,7 @@ public class Sender extends Thread {
 		this.file = file;
 		this.subdirectories = subdirectories;
 		this.unpackZip = unpackZip;
+		this.skipDuplicates = skipDuplicates;
 		this.forceMircContentType = forceMircContentType;
 		this.urlString = urlString;
 		String urlLC = urlString.toLowerCase().trim();
@@ -111,7 +117,9 @@ public class Sender extends Thread {
 	 * Start the Thread.
 	 */
 	public void run() {
-		fileNumber = 0;
+		fileCount = 0;
+		skipCount = 0;
+		sopiUIDs = new HashSet<String>();
 		send(file);
 		if (interrupted()) sendEvent("<br><b><font color=\"red\">Interrupted</font></b>",true);
 		else sendEvent("<br><b>Done.</b>",true);
@@ -122,7 +130,15 @@ public class Sender extends Thread {
 	 * @return the file count.
 	 */
 	public int getFileCount() {
-		return fileNumber;
+		return fileCount;
+	}
+
+	/**
+	 * Get the number of files skipped during the run call.
+	 * @return the skip count.
+	 */
+	public int getSkipCount() {
+		return skipCount;
 	}
 
 	//Unpack the URL string and make sure it is acceptable.
@@ -227,7 +243,7 @@ public class Sender extends Thread {
 		BufferedInputStream fis;
 		BufferedReader svrrdr;
 		long fileLength = file.length();
-		String message = "<b>" + (++fileNumber) + "</b>: Send " +
+		String message = "<b>" + (++fileCount) + "</b>: Send " +
 						file.getAbsolutePath() + " to " + urlString + "<br>";
 		try {
 			url = new URL(urlString);
@@ -348,30 +364,48 @@ public class Sender extends Thread {
 
 	//Send one file using DICOM.
 	private boolean sendFileUsingDicom(File file) {
-		String message = "<b>" + (++fileNumber) + "</b>: Send " +
-							file.getAbsolutePath() + " to " + urlString + "<br>";
-		DicomStorageSCU dicomSender = new DicomStorageSCU(
-												urlString,
-												10000, //association timeout in ms
-												true, //use new association for each file
-												0, //host tag
-												0, //port tag
-												0, //called AET tag
-												0  //calling AET tag
-											);
-		Status status = dicomSender.send(file);
-		if (status.equals(Status.FAIL)) {
-			sendMessage(message +
-				"<font color=\"red\">DicomSend result = FAIL</font><br><br>");
+		String sopiUID = null;
+		if (skipDuplicates) {
+			try {
+				DicomObject dob = new DicomObject(file);
+				sopiUID = dob.getSOPInstanceUID();
+			}
+			catch (Exception unable) { }
+		}
+		if (!skipDuplicates || (sopiUID == null) || !sopiUIDs.contains(sopiUID)) {
+			String message = "<b>" + (++fileCount) + "</b>: Send " +
+								file.getAbsolutePath() + " to " + urlString + "<br>";
+			DicomStorageSCU dicomSender = new DicomStorageSCU(
+													urlString,
+													10000, //association timeout in ms
+													true, //use new association for each file
+													0, //host tag
+													0, //port tag
+													0, //called AET tag
+													0  //calling AET tag
+												);
+			Status status = dicomSender.send(file);
+			if (status.equals(Status.FAIL)) {
+				sendMessage(message +
+					"<font color=\"red\">DicomSend result = FAIL</font><br><br>");
+				return false;
+			}
+			else if (status.equals(Status.RETRY)) {
+				sendMessage(message +
+					"<font color=\"red\">DicomSend result = RETRY</font><br><br>");
+				return false;
+			}
+			else {
+				sendMessage(message + "<b>OK</b><br><br>");
+				if (sopiUID != null) sopiUIDs.add(sopiUID);
+			}
+			return true;
+		}
+		else {
+			sendMessage((++skipCount) + ": Skip " + file.getAbsolutePath() + "<br>");
+			//System.out.println(file + " skipped; skipDuplicates == "+skipDuplicates);
 			return false;
 		}
-		else if (status.equals(Status.RETRY)) {
-			sendMessage(message +
-				"<font color=\"red\">DicomSend result = RETRY</font><br><br>");
-			return false;
-		}
-		else sendMessage(message + "<b>OK</b><br><br>");
-		return true;
 	}
 
 	// Make a tag string readable as text
