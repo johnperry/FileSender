@@ -42,6 +42,8 @@ public class Sender extends Thread {
 	boolean unpackZip;
 	boolean skipDuplicates;
 	boolean forceMircContentType;
+	int interval;
+	boolean deleteFile;
 	Properties contentTypes;
 	String urlString;
 	String calledAET;
@@ -82,6 +84,8 @@ public class Sender extends Thread {
 				  boolean unpackZip,
 				  boolean skipDuplicates,
 				  boolean forceMircContentType,
+				  int interval,
+				  boolean deleteFile,
 				  String urlString) throws Exception {
 		super();
 		this.parent = parent;
@@ -91,6 +95,8 @@ public class Sender extends Thread {
 		this.unpackZip = unpackZip;
 		this.skipDuplicates = skipDuplicates;
 		this.forceMircContentType = forceMircContentType;
+		this.interval = interval;
+		this.deleteFile = deleteFile;
 		this.urlString = urlString;
 		String urlLC = urlString.toLowerCase().trim();
 		http = (urlLC.indexOf("http://") != -1);
@@ -175,6 +181,11 @@ public class Sender extends Thread {
 			else if (http || https) result = sendFileUsingHttp(file);
 			else if (dicom) result = sendFileUsingDicom(file);
 			System.gc();
+			if (interval > 0) {
+				try { Thread.sleep(interval); }
+				catch (Exception ex) { }
+			}
+			if (result && deleteFile) file.delete();
 			return result;
 		}
 

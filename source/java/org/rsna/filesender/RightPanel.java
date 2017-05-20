@@ -16,6 +16,7 @@ import org.rsna.ui.ApplicationProperties;
 import org.rsna.ui.FileEvent;
 import org.rsna.ui.FileListener;
 import org.rsna.ui.SourcePanel;
+import org.rsna.util.StringUtil;
 
 /**
  * A JPanel that provides a user interface for the active part of
@@ -36,7 +37,7 @@ public class RightPanel extends JPanel
 	SenderScrollPane senderScrollPane;
 	File currentSelection = null;
 
-	DestinationPanel destinationPanel;
+	public DestinationPanel destinationPanel;
 
 	/**
 	 * Class constructor; creates an instance of the RightPanel and
@@ -67,6 +68,10 @@ public class RightPanel extends JPanel
 
 		sourcePanel.getDirectoryPane().addFileListener(this);
 		footerPanel.button.addActionListener(this);
+	}
+	
+	public void save() {
+		destinationPanel.save();
 	}
 
 	/**
@@ -109,7 +114,7 @@ public class RightPanel extends JPanel
 		String buttonText = footerPanel.button.getText();
 		if (event.getSource() instanceof JButton) {
 			if (buttonText.equals("Send")) {
-				destinationPanel.destinationList.setDestinations();
+				destinationPanel.save();
 				String destination = destinationPanel.destinationList.getSelectedDestination();
 				boolean subdirectories = sourcePanel.getSubdirectories();
 				if ((currentSelection != null) && !destination.trim().equals("")) {
@@ -122,6 +127,8 @@ public class RightPanel extends JPanel
 							footerPanel.unpackZip.isSelected(),
 							footerPanel.skipDuplicates.isSelected(),
 							footerPanel.forceMIRC.isSelected(),
+							footerPanel.getInterval(),
+							footerPanel.deleteFile.isSelected(),
 							destination);
 						sender.addSenderListener(this);
 						footerPanel.button.setText("Cancel");
@@ -174,12 +181,14 @@ public class RightPanel extends JPanel
 		public JCheckBox unpackZip;
 		public JCheckBox skipDuplicates;
 		public JCheckBox forceMIRC;
+		public TextBox interval;
+		public JCheckBox deleteFile;
 		public FooterPanel() {
 			super();
 			this.setBackground(background);
 			this.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
 
-			String unpack = (String)properties.getProperty("unpack-zip-files");
+			String unpack = properties.getProperty("unpack-zip-files");
 			if (unpack == null) {
 				unpack = "yes";
 				properties.setProperty("unpack-zip-files",unpack);
@@ -187,7 +196,7 @@ public class RightPanel extends JPanel
 			unpackZip = new JCheckBox("Unpack zip files",unpack.equals("yes"));
 			unpackZip.setBackground(background);
 
-			String skip = (String)properties.getProperty("skip-duplicates");
+			String skip = properties.getProperty("skip-duplicates");
 			if (skip == null) {
 				skip = "no";
 				properties.setProperty("skip-duplicates",skip);
@@ -195,13 +204,17 @@ public class RightPanel extends JPanel
 			skipDuplicates = new JCheckBox("Skip duplicate SOPInstanceUIDs for DICOM",skip.equals("yes"));
 			skipDuplicates.setBackground(background);
 
-			String mirc = (String)properties.getProperty("force-mirc");
+			String mirc = properties.getProperty("force-mirc");
 			if (mirc == null) {
 				mirc = "yes";
 				properties.setProperty("force-mirc",mirc);
 			}
 			forceMIRC = new JCheckBox("Force MIRC Content-Type for HTTP(S)",mirc.equals("yes"));
 			forceMIRC.setBackground(background);
+			
+			interval = new TextBox("0");
+			deleteFile = new JCheckBox("", false);
+			deleteFile.setBackground(background);
 
 			button = new JButton("Send");
 
@@ -209,12 +222,18 @@ public class RightPanel extends JPanel
 			box1.add(unpackZip);
 			unpackZip.addActionListener(this);
 			box1.add(Box.createHorizontalGlue());
+			box1.add(new JLabel("Interval (ms):"));
+			box1.add(Box.createHorizontalStrut(5));
+			box1.add(interval);
 			this.add(box1);
 
 			Box box2 = new Box(BoxLayout.X_AXIS);
 			box2.add(skipDuplicates);
 			skipDuplicates.addActionListener(this);
 			box2.add(Box.createHorizontalGlue());
+			box2.add(new JLabel("Delete after transmission:"));
+			//box2.add(Box.createHorizontalStrut(2));
+			box2.add(deleteFile);
 			this.add(box2);
 
 			Box box3 = new Box(BoxLayout.X_AXIS);
@@ -224,11 +243,24 @@ public class RightPanel extends JPanel
 			box3.add(button);
 			this.add(box3);
 		}
+		public int getInterval() {
+			return StringUtil.getInt(interval.getText(), 0);
+		}
 		public void actionPerformed(ActionEvent evt) {
 			properties.setProperty("unpack-zip-files",(unpackZip.isSelected() ? "yes" : "no"));
 			properties.setProperty("skip-duplicates",(skipDuplicates.isSelected() ? "yes" : "no"));
 			properties.setProperty("force-mirc",(forceMIRC.isSelected() ? "yes" : "no"));
 		}
 	}
-
+	
+	class TextBox extends JTextField {
+		public TextBox(String text) {
+			super(text);
+			Dimension size = getPreferredSize();
+			size.width = 63;
+			setPreferredSize(size);
+			setMaximumSize(size);
+			setHorizontalAlignment(SwingConstants.RIGHT);
+		}
+	}
 }

@@ -39,6 +39,10 @@ public class DestinationPanel extends JPanel {
 		destinationList = new DestinationList();
 		this.add(destinationList,BorderLayout.CENTER);
 	}
+	
+	public void save() {
+		destinationList.setDestinations();
+	}
 
 	//Class to put the heading on the main body of the JPanel. This
 	//heading provides example URLs to make it easy to remember
@@ -107,14 +111,51 @@ public class DestinationPanel extends JPanel {
 		}
 
 		private String[] getDestinations() {
-			String dest;
+			LinkedList<Destination> dList = new LinkedList<Destination>();
+			Enumeration keys = properties.propertyNames();
+			while (keys.hasMoreElements()) {
+				String key = (String)keys.nextElement();
+				if (key.startsWith("destination[")) {
+					int k = key.indexOf("]", 12);
+					if (k > 12) {
+						try {
+							dList.add(new Destination(
+								Integer.parseInt(key.substring(12,k)),
+								properties.getProperty(key)));
+						}
+						catch (Exception skip) { }
+					}
+				}
+			}
+			Destination[] dArray = dList.toArray(new Destination[dList.size()]);
+			Arrays.sort(dArray);
 			LinkedList<String> list = new LinkedList<String>();
-			for (int i=0; (dest=properties.getProperty("destination["+i+"]"))!=null; i++)
-				list.add(dest);
+			for (Destination d : dArray) list.add(d.url);
 			return list.toArray(new String[list.size()]);
 		}
+		
+		class Destination implements Comparable<Destination> {
+			public int index;
+			public String url;
+			public Destination(int index, String url) {
+				this.index = index;
+				this.url = url;
+			}
+			public int compareTo(Destination d) {
+				return this.index - d.index;
+			}
+		}			
 
 		public void setDestinations() {
+			//remove the old destination properties
+			Enumeration keys = properties.propertyNames();
+			while (keys.hasMoreElements()) {
+				String key = (String)keys.nextElement();
+				if (key.startsWith("destination[")) {
+					properties.remove(key);
+				}
+			}
+			//add in the properties from the fields
 			String dest;
 			int field = 0;
 			for (int i=0; i<fields.length; i++) {
@@ -124,7 +165,6 @@ public class DestinationPanel extends JPanel {
 					field++;
 				}
 			}
-			properties.remove("destination["+field+"]");
 		}
 
 		public String getSelectedDestination() {

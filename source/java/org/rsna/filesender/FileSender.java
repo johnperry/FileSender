@@ -28,6 +28,7 @@ public class FileSender extends JFrame {
 	String windowTitle = "MIRC FileSender - version 24";
 	ApplicationProperties properties;
 	GeneralAuthenticator authenticator;
+	RightPanel rightPanel;
 
 	public static void main(String args[]) {
 		Logger.getRootLogger().addAppender(
@@ -50,7 +51,7 @@ public class FileSender extends JFrame {
 				public void windowClosing(WindowEvent evt) { exitForm(evt); } });
 
 		SourcePanel sourcePanel = new SourcePanel(properties);
-		RightPanel rightPanel = new RightPanel(properties,sourcePanel);
+		rightPanel = new RightPanel(properties,sourcePanel);
 		JSplitPane jSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,sourcePanel,rightPanel);
 		jSplitPane.setResizeWeight(0.5D);
 		jSplitPane.setContinuousLayout(true);
@@ -67,6 +68,7 @@ public class FileSender extends JFrame {
 
 	//Store the properties object before exiting.
 	private void exitForm(java.awt.event.WindowEvent evt) {
+		rightPanel.save();
 		properties.store();
 		System.exit(0);
 	}
