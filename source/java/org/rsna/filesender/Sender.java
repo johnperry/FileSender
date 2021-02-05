@@ -31,6 +31,8 @@ import org.rsna.util.HttpUtil;
  * A Thread for sending one or more files using HTTP, HTTPS, or DICOM.
  */
 public class Sender extends Thread {
+	
+	static Logger logger = Logger.getLogger(Sender.class);
 
 	private TrustManager[] trustAllCerts;
 
@@ -386,15 +388,7 @@ public class Sender extends Thread {
 		if (!skipDuplicates || (sopiUID == null) || !sopiUIDs.contains(sopiUID)) {
 			String message = "<b>" + (++fileCount) + "</b>: Send " +
 								file.getAbsolutePath() + " to " + urlString + "<br>";
-			DicomStorageSCU dicomSender = new DicomStorageSCU(
-													urlString,
-													10000, //association timeout in ms
-													true, //use new association for each file
-													0, //host tag
-													0, //port tag
-													0, //called AET tag
-													0  //calling AET tag
-												);
+			DicomStorageSCU dicomSender = getDicomStorageSCU(urlString);
 			Status status = dicomSender.send(file);
 			if (status.equals(Status.FAIL)) {
 				sendMessage(message +
@@ -417,6 +411,28 @@ public class Sender extends Thread {
 			//System.out.println(file + " skipped; skipDuplicates == "+skipDuplicates);
 			return false;
 		}
+	}
+
+	DicomStorageSCU lastSCU = null;
+	String lastURL = "";
+	private DicomStorageSCU getDicomStorageSCU(String url) {
+		if ( (lastURL == null) || !url.equals(lastURL) ) {
+			logger.debug("lastURL = "+lastURL);
+			logger.debug("url = "+url);			
+			logger.debug("Instantiating new DicomStorageSCU");
+			lastURL = url;
+			lastSCU = new DicomStorageSCU(
+							urlString,
+							10000, //association timeout in ms
+							false, //use new association for each file
+							0, //host tag
+							0, //port tag
+							0, //called AET tag
+							0  //calling AET tag
+						);
+		}
+		else logger.debug("Reusing DicomStorageSCU");
+		return lastSCU;
 	}
 
 	// Make a tag string readable as text

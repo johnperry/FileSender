@@ -25,16 +25,22 @@ import org.rsna.ui.SourcePanel;
  */
 public class FileSender extends JFrame {
 
-	String windowTitle = "MIRC FileSender - version 24";
+	String windowTitle = "MIRC FileSender - version 25";
 	ApplicationProperties properties;
 	GeneralAuthenticator authenticator;
 	RightPanel rightPanel;
+	static Logger logger = null;
 
 	public static void main(String args[]) {
-		Logger.getRootLogger().addAppender(
-				new ConsoleAppender(
-					new PatternLayout("%d{HH:mm:ss} %-5p [%c{1}] %m%n")));
-		Logger.getRootLogger().setLevel(Level.ERROR);
+		File logProps = new File("log4j.properties");
+		String propsPath = logProps.getAbsolutePath();
+		if (!logProps.exists()) {
+			System.out.println("Logger configuration file: "+propsPath);
+			System.out.println("Logger configuration file not found.");
+		}
+		PropertyConfigurator.configure(propsPath);
+		logger = Logger.getLogger(FileSender.class);
+		
 		new FileSender();
 	}
 
