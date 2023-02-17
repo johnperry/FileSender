@@ -72,12 +72,19 @@ public class Sender extends Thread {
 	 * its subdirectories are to be sent; false if only files in
 	 * the directory itself are to be sent; ignored if file is not
 	 * a directory.
+	 * @param unpackZip true zip files are to be unpacked and their
+	   contents sent individually; false if zip files are to be sent intact.
+	 * @param skipDuplicates true files with SOPInstanceUIDs that have
+	   already been sent are to be skipped.
 	 * @param forceMircContentType true if the HTTP content type is
 	 * to be set to application/x-mirc-dicom for uploading to MIRC
 	 * Clinical Trial Services; false if the file extension is to be
 	 * used to determine the content type; ignored if the protocol is
 	 * DICOM.
+	 * @param interval time to wait after sending a file.
+	 * @param deleteFile true to delete a file after successful transmission.
 	 * @param urlString the URL of the destination.
+	 * @throws Exception on any error
 	 */
 	public Sender(Component parent,
 				  GeneralFileFilter filter,

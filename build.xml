@@ -29,6 +29,9 @@
    </path>
 
 	<target name="init">
+		<echo message="=================================================="/>
+		<echo message="Building ${ant.project.name}"/>
+		<echo message="=================================================="/>
 		<tstamp>
 			<format property="today" pattern="yyyy.MM.dd"/>
 			<format property="now" pattern="HH:mm:ss z"/>
@@ -71,7 +74,7 @@
       <jar destfile="${products}/FileSender.jar">
          <manifest>
             <attribute name="Main-Class" value="org.rsna.filesender.FileSender"/>
-            <attribute name="Class-Path" value="dcm4che.jar getopt.jar log4j.jar CTP.jar util.jar"/>
+            <attribute name="Class-Path" value="dcm4che.jar dcm4che-imageio-rle-2.0.25.jar getopt.jar log4j.jar CTP.jar util.jar"/>
          </manifest>
          <fileset dir="${build}"
             includes="${filesender}/** content-types.properties" 
